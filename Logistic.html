@@ -1,0 +1,190 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Logistic Regression Learning Lab | Interactive ML System</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.1.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1><i class="fas fa-chalkboard-user"></i> Logistic Regression Learning Lab</h1>
+            <p>Interactive classification learning system | Upload dataset, preprocess, visualize, train & understand
+                from scratch</p>
+        </div>
+
+        <!-- Step Navigation -->
+        <div class="steps-container" id="stepNav">
+            <button class="step-btn active" data-step="0">1️⃣ Data Upload</button>
+            <button class="step-btn" data-step="1">2️⃣ Preprocessing</button>
+            <button class="step-btn" data-step="2">3️⃣ EDA</button>
+            <button class="step-btn" data-step="3">4️⃣ Theory & Math</button>
+            <button class="step-btn" data-step="4">5️⃣ Train & Config</button>
+            <button class="step-btn" data-step="5">6️⃣ Results & Inference</button>
+        </div>
+
+        <!-- Panel 0: Data Upload -->
+        <div class="panel active-panel" id="panel0">
+            <h2><i class="fas fa-upload"></i> Dataset Upload Module</h2>
+            <div class="info-tooltip"><i class="fas fa-lightbulb"></i> Upload CSV with binary/multi-class target.
+                Logistic Regression works best with labelled classification.</div>
+            <input type="file" id="csvUpload" accept=".csv" style="margin: 15px 0; display: block;">
+            <div id="datasetPreview" class="card">
+                <div class="card-title">Dataset Preview</div>
+                <div id="previewTable">No file uploaded yet.</div>
+                <div id="targetSelectBox" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- Panel 1: Preprocessing -->
+        <div class="panel" id="panel1">
+            <h2><i class="fas fa-sliders-h"></i> Preprocessing Interface</h2>
+            <div class="grid-2col">
+                <div class="card">
+                    <div class="card-title">🧹 Missing Values</div><label><input type="checkbox" id="handleMissing">
+                        Drop rows / Impute mean (numeric)</label>
+                    <div class="info-tooltip">Logistic Regression requires complete data; we'll impute numeric columns
+                        with mean.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🏷️ Encoding</div><label><input type="checkbox" id="labelEncode"> Label
+                        Encode categorical target / One-Hot for features</label>
+                    <div class="info-tooltip">Convert categories to numbers using label encoding or one-hot.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📏 Feature Scaling (Standardization)</div><label><input type="checkbox"
+                            id="scaleFeatures" checked> Standardization (z-score) — important for gradient descent
+                        convergence</label>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚙️ Apply Preprocessing</div><button id="applyPreprocessBtn">Apply & Preview
+                        After</button>
+                    <div id="preprocessStatus" class="info-tooltip" style="margin-top:12px;">Before vs After comparison
+                        will appear here.</div>
+                </div>
+            </div>
+            <div id="preprocessCompare" class="card"><strong>Before vs After Preview:</strong> <span
+                    id="compareMsg">Click apply after configuring.</span></div>
+        </div>
+
+        <!-- Panel 2: EDA -->
+        <div class="panel" id="panel2">
+            <h2><i class="fas fa-chart-line"></i> Exploratory Data Analysis</h2>
+            <div class="grid-2col">
+                <div class="card">
+                    <div class="card-title">📊 Class Distribution</div>
+                    <div id="classDistChart" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 Feature Distributions</div>
+                    <div id="featureDistChart" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🔥 Correlation Matrix</div>
+                    <div id="corrPlot" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🎯 Feature vs Target (Box)</div>
+                    <div id="featureTargetPlot" class="chart-container"></div>
+                </div>
+            </div>
+            <button id="refreshEdaBtn" class="secondary">Refresh EDA</button>
+        </div>
+
+        <!-- Panel 3: Theory & Math -->
+        <div class="panel" id="panel3">
+            <h2><i class="fas fa-square-root-alt"></i> Logistic Regression: Mathematical Intuition</h2>
+            <div class="grid-2col">
+                <div class="card">
+                    <div class="card-title">📐 Linear Model → Sigmoid</div>
+                    <div class="math-block">z = w·x + b → σ(z) = 1 / (1 + e^{-z})</div>
+                    <p>Probability P(y=1|x) = σ(z). Decision boundary at σ(z)=0.5 => z=0.</p>
+                    <div class="info-tooltip"><i class="fas fa-brain"></i> <strong>Why Sigmoid?</strong> Maps any real
+                        number to (0,1) allowing probability interpretation.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🧪 Step-by-Step Sample Calculation</div>
+                    <div id="stepCalcDemo">Select a sample after training to see computation.</div><button
+                        id="showDemoCalc" disabled>Run demo with first sample (after training)</button>
+                </div>
+                <div class="card">
+                    <div class="card-title">🔄 Binary vs Multi-class (OvR)</div>
+                    <p>Binary: single sigmoid. Multi-class: One-vs-Rest trains K classifiers, picks highest
+                        probability.<br><span class="inline-code">argmax(σ(z_k))</span></p>
+                </div>
+                <div class="card">
+                    <div class="card-title">📉 Linear vs Logistic Regression</div>
+                    <p>Linear => continuous output; Logistic => probability + classification threshold. Loss:
+                        Cross-Entropy instead of MSE.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 4: Training Config -->
+        <div class="panel" id="panel4">
+            <h2><i class="fas fa-cogs"></i> Training Configuration</h2>
+            <div class="grid-2col">
+                <div class="card">
+                    <div class="card-title">Train-Test Split</div><label>Test Ratio: <input type="number" id="testRatio"
+                            step="0.05" value="0.2" min="0.1" max="0.4"></label><button id="splitDataBtn">Split
+                        Data</button>
+                    <div id="splitInfo"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Cross-Validation (K-Fold)</div><label>K value: <input type="number"
+                            id="kfoldVal" value="5" min="2" max="10"></label><button id="runCvBtn">Run K-Fold
+                        CV</button>
+                    <div id="cvResult"></div>
+                </div>
+                <div class="card full-width">
+                    <div class="card-title">🚀 Train Logistic Regression Model</div><button id="trainModelBtn"
+                        style="background:#10b981;">Start Training (Gradient Descent)</button>
+                    <div id="trainingStatus"></div>
+                    <div id="paramDisplay">Learned Weights & Bias will appear here.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 5: Evaluation & Inference -->
+        <div class="panel" id="panel5">
+            <h2><i class="fas fa-chart-simple"></i> Evaluation & Prediction</h2>
+            <div class="grid-2col">
+                <div class="card">
+                    <div class="card-title">Confusion Matrix</div>
+                    <div id="confMatrixPlot" class="chart-container"></div>
+                    <div id="metrics">Accuracy, Precision, Recall, F1: --</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">ROC Curve & AUC</div>
+                    <div id="rocPlot" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🧪 Custom Sample Inference</div>
+                    <div><input type="text" id="customInputFeat" placeholder="feature1,feature2,... (comma separated)"
+                            style="width:100%"></div><button id="predictCustomBtn">Predict Probability & Class</button>
+                    <div id="inferenceSteps" class="math-block">Linear combination (z) → Sigmoid → Decision</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Decision Boundary (2D features)</div>
+                    <div id="decisionBoundaryPlot" class="chart-container"></div>
+                    <div class="info-tooltip">Visualization only if dataset has 2 features after prep.</div>
+                </div>
+            </div>
+        </div>
+        <footer>📘 Designed for CIA-1: Logistic Regression from scratch — Educational ML System</footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
